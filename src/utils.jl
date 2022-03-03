@@ -63,7 +63,7 @@ end
 Returns given string without '-' gap symbols.
 """
 function degap(s::LongSequence)
-    return LongSequence(degap(String(s)))
+    return LongDNA{4}(degap(String(s)))
 end
 
 """
