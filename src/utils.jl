@@ -63,7 +63,7 @@ end
 Returns given string without '-' gap symbols.
 """
 function degap(s::LongSequence)
-    return LongDNA{4}(degap(String(s)))
+    return LongDNASeq(degap(String(s)))
 end
 
 """
@@ -150,7 +150,7 @@ end
 Returns the complement of the reverse of given nucleotide sequence.
 """
 function NextGenSeqUtils.reverse_complement(dna_string::String)
-    return String(BioSequences.reverse_complement(LongDNA{4}(dna_string)))
+    return String(BioSequences.reverse_complement(LongDNASeq(dna_string)))
 end
 
 """
@@ -209,7 +209,7 @@ end
 Return amino acid string translation of nucleotide sequence using BioSequences conversion.
 """
 function translate_to_aa(s::String)
-    rna = convert(LongRNA{4}, LongDNA{4}(s))
+    rna = convert(LongRNASeq, LongDNA{4}(s))
     return string(translate(rna))
 end
 
