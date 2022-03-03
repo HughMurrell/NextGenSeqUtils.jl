@@ -150,7 +150,7 @@ end
 Returns the complement of the reverse of given nucleotide sequence.
 """
 function NextGenSeqUtils.reverse_complement(dna_string::String)
-    return String(BioSequences.reverse_complement(LongDNASeq(dna_string)))
+    return String(BioSequences.reverse_complement(LongDNA(dna_string)))
 end
 
 """
@@ -209,7 +209,7 @@ end
 Return amino acid string translation of nucleotide sequence using BioSequences conversion.
 """
 function translate_to_aa(s::String)
-    rna = convert(LongRNASeq, LongDNASeq(s))
+    rna = convert(LongRNA, LongDNA(s))
     return string(translate(rna))
 end
 
