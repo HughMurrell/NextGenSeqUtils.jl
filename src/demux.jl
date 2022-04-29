@@ -573,31 +573,49 @@ end
 #------Chunked demux funcions--------
 # Currently not exported.
 """
-function chunked_fastq_filter_demux(seqs, phreds, names;
+function chunked_fastq_filter_demux(chunk, chunk_size, seqs, phreds, names;
     demux_dir = "demux", fwd_primers = String[], rev_primers = String[],
-    verbose = false, tol_one_error = true, primer_lookup = nothing, error_rate = 0.01,
+    verbose = false, tol_one_error = true, primer_lookup = Dict(), error_rate = 0.01,
     min_length = 30, max_length = 1000000, label_prefix = "seq", error_out = true)
 
 Intended to be passed to `chunked_fastq_apply()` for quality/length filtering and demultiplexing of
 FASTQ files in one pass.
 """
-function chunked_fastq_filter_demux(seqs, phreds, names;
+function chunked_fastq_filter_demux(chunk, chunk_size, seqs, phreds, names;
     demux_dir = "demux", fwd_primers = String[], rev_primers = String[],
-    verbose = false, tol_one_error = true, primer_lookup = nothing, error_rate = 0.01,
+    verbose = false, tol_one_error = true, primer_lookup = Dict(), error_rate = 0.01,
     min_length = 30, max_length = 1000000, label_prefix = "seq", error_out = true)
+    
+    total_reads, quality_reads, demuxed_reads = 0, 0, 0
+    total_reads = length(seqs)
+                                                                                
 
     #filter...
     lengths = length.(seqs)
     mean_errors = [mean(phred_to_p.(phred)) for phred in phreds]
     inds = [1:length(seqs);][(lengths .< max_length) .& (lengths .> min_length) .& (mean_errors .< error_rate)]
-
+    
+    # write failed sequences    
+    outpath = demux_dir*"/QUALITY_REJECTS.fastq"                                                                             
+    records = FASTQ.Record.(
+                    names[.!inds],
+                    seqs[.!inds],
+                    phreds[.!inds]
+                    )
+    writer = FASTQ.Writer(open(outpath, "a"))                                                                                    
+    for record in records
+         write(writer, record)                                                                                         
+    end                                                                                 
+    close(writer)
+                                                                                            
     if error_out == true
-        filtered_names = ["$label_prefix$(i)|ee=$(mean_errors[i])" for i in inds]
+        filtered_names = ["$label_prefix$(((chunk-1)*chunk_size+i))|ee=$(mean_errors[i])" for i in inds]
     else
-        filtered_names = ["$label_prefix$(i)" for i in 1:length(inds)]
+        filtered_names = ["$label_prefix$(((chunk-1)*chunk_size+i))" for i in 1:length(inds)]
     end
 
     filtered_seqs, filtered_phreds = seqs[inds], phreds[inds]
+    quality_reads = length(filtered_seqs)                                                                                   
 
     #demux...
     demux_dic = demux_dict(filtered_seqs, fwd_primers, rev_primers;
@@ -607,16 +625,12 @@ function chunked_fastq_filter_demux(seqs, phreds, names;
     for (i, fwd_primer) in enumerate(fwd_primers)
         for (j, rev_primer) in enumerate(rev_primers)
             if haskey(demux_dic,(i,j))
-                if isnothing(primer_lookup)
-                    outpath = demux_dir*"/$(fwd_primer)_$(rev_primer).fastq"
+                if haskey(primer_lookup,(fwd_primer,rev_primer))
+                    ID = primer_lookup[fwd_primer,rev_primer]
                 else
-                    if haskey(primer_lookup,(fwd_primer,rev_primer))
-                        ID = primer_lookup[fwd_primer,rev_primer]
-                    else
-                        ID = "UNKNOWN"
-                    end
-                    outpath = demux_dir*"/$(ID)_$(fwd_primer)_$(rev_primer).fastq"
+                    ID = "UNKNOWN"
                 end
+                outpath = demux_dir*"/$(ID)_$(fwd_primer)_$(rev_primer).fastq"
                 result = demux_dic[i,j]
                 records = FASTQ.Record.(
                     filtered_names[getindex.(result, 3)],
@@ -626,9 +640,13 @@ function chunked_fastq_filter_demux(seqs, phreds, names;
                 writer = FASTQ.Writer(open(outpath, "a"))
                 for record in records
                     write(writer, record)
+                    if ID != "UNKNOWN"
+                        demuxed_reads += 1
+                    end                                                                                                
                 end
-                close(writer)
+                close(writer)                                                                                                
             end
         end
     end
+    return [total_reads, quality_reads, demuxed_reads]
 end
