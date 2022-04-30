@@ -597,13 +597,14 @@ function chunked_fastq_filter_demux(chunk, chunk_size, seqs, phreds, names;
     lengths = length.(seqs)
     mean_errors = [mean(phred_to_p.(phred)) for phred in phreds]
     inds = [1:length(seqs);][(lengths .< max_length) .& (lengths .> min_length) .& (mean_errors .< error_rate)]
-    
+    rejects = setdiff(1:length(seqs),inds)
+                                                                                            
     # write failed sequences    
     outpath = demux_dir*"/QUALITY_REJECTS.fastq"                                                                             
     records = FASTQ.Record.(
-                    names[.!inds],
-                    seqs[.!inds],
-                    phreds[.!inds]
+                    names[rejects],
+                    seqs[rejects],
+                    phreds[rejects]
                     )
     writer = FASTQ.Writer(open(outpath, "a"))                                                                                    
     for record in records
