@@ -164,7 +164,6 @@ function chunked_fastq_apply(fpath, func::Function; chunk_size=10000, f_kwargs =
             #apply func...
 	    chunk += 1						
             read_counts += func(chunk, chunk_size, seqs, phreds, names; f_kwargs...)
-			push!(results, res)
             seqs, phreds, names = [], Vector{Phred}[], []
             i = 0
             if verbose print(".") end
