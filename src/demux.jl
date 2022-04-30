@@ -623,7 +623,7 @@ function chunked_fastq_filter_demux(chunk, chunk_size, seqs, phreds, names;
 
     #demux...
     demux_dic = demux_dict(filtered_seqs, fwd_primers, rev_primers;
-        phreds = filtered_phreds, verbose = verbose, tol_one_error = tol_one_error
+        phreds = filtered_phreds, tol_one_error = tol_one_error
     )
     #write...
     for (i, fwd_primer) in enumerate(fwd_primers)
