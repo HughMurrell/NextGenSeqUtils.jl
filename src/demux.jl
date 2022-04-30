@@ -588,7 +588,10 @@ function chunked_fastq_filter_demux(chunk, chunk_size, seqs, phreds, names;
     
     total_reads, quality_reads, demuxed_reads = 0, 0, 0
     total_reads = length(seqs)
-                                                                                
+    
+    if verbose
+        println("processing chunk $(chunk) of size $(length(seqs))")
+    end                                                                                    
 
     #filter...
     lengths = length.(seqs)
