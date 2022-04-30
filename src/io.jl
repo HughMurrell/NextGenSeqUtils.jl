@@ -44,18 +44,18 @@ function read_fasta_with_names_in_other_order(filename::String; seqtype=String)
 end
 
 """
-    write_fasta(filename::String, seqs; names = String[])
+    write_fasta(filename::String, seqs; names = String[], append=false)
 
 Write given `seqs` and optional `names` to a .fasta file with given filepath.
 """
-function write_fasta(filename::String, seqs; names = String[])
+function write_fasta(filename::String, seqs; names = String[], append=false)
     if length(names) > 0 && length(names) != length(seqs)
         error("number of sequences does not match number of names")
     end
     if length(names) == 0
         names = ["seq_$i" for i in 1:length(seqs)]
     end
-    stream = open(FASTA.Writer, filename)
+    stream = open(FASTA.Writer, filename, append=append)
     for (name, seq) in zip(names, seqs)
         write(stream, FASTA.Record(name, seq))
     end
@@ -103,7 +103,7 @@ function read_fastq(filename; seqtype=String, min_length=nothing, max_length=not
 		if max_length != nothing && length(FASTQ.sequence(seqtype, record)) > max_length
 			continue
         end
-		push!(seqs, FASTQ.sequence(seqtype, record))
+	push!(seqs, FASTQ.sequence(seqtype, record))
         push!(phreds, FASTQ.quality(record, :sanger))
         push!(names, FASTQ.identifier(record))
     end
@@ -112,17 +112,18 @@ end
 
 """
     write_fastq(filename, seqs, phreds::Vector{Vector{Phred}};
-                     names=String[], LongSequence = false)
+                     names=String[], LongSequence = false, append = false)
 
 Write given sequences, phreds, names to .fastq file with given file path.
 If `names` not provided, gives names 'seq_1', etc.
 """
 function write_fastq(filename, seqs, phreds::Vector{Vector{Phred}};
-                     names=String[], LongSequence = false)
+                     names=String[], LongSequence = false,
+                     append = false)
     if !LongSequence
-        seqs = [LongCharSeq(s) for s in seqs]
+        seqs = [BioSequences.LongDNA{4}(s) for s in seqs]
     end
-    stream = open(FASTQ.Writer, filename)
+    stream = open(FASTQ.Writer, filename, append=append)
     i = 0
     if length(names) != length(seqs)
         names = [string("seq_", i) for i in 1:length(seqs)]
@@ -132,7 +133,7 @@ function write_fastq(filename, seqs, phreds::Vector{Vector{Phred}};
         write(stream, FASTQ.Record(n, s, q))
     end
     close(stream)
-end
+end			
 
 #------Chunked IO funcions--------
 
