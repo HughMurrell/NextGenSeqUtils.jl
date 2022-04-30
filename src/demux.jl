@@ -394,7 +394,7 @@ function fast_primer_pair_match(seqs,fwd_primers,rev_primers; tol_one_error = tr
 end
 
 export demux_dict
-function demux_dict(seqs,fwd_primers,rev_primers; verbose = true, phreds = nothing, tol_one_error = true)
+function demux_dict(seqs,fwd_primers,rev_primers; verbose = false, phreds = nothing, tol_one_error = true)
     if rev_primers == nothing
         fwd_matches = fast_primer_match(seqs,fwd_primers,tol_one_error=tol_one_error)
         rev_comp_bool = fwd_matches .< 0
@@ -581,8 +581,9 @@ function chunked_fastq_filter_demux(chunk, chunk_size, seqs, phreds, names;
 Intended to be passed to `chunked_fastq_apply()` for quality/length filtering and demultiplexing of
 FASTQ files in one pass.
 """
+export chunked_fastq_filter_demux                                                                                
 function chunked_fastq_filter_demux(chunk, chunk_size, seqs, phreds, names;
-    demux_dir = "demux", fwd_primers = String[], rev_primers = String[],
+    demux_dir = "demux", rejects_dir = "rejects", fwd_primers = String[], rev_primers = String[],
     verbose = false, tol_one_error = true, primer_lookup = Dict(), error_rate = 0.01,
     min_length = 30, max_length = 1000000, label_prefix = "seq", error_out = true)
     
@@ -600,7 +601,7 @@ function chunked_fastq_filter_demux(chunk, chunk_size, seqs, phreds, names;
     rejects = setdiff(1:length(seqs),inds)
                                                                                             
     # write failed sequences    
-    outpath = demux_dir*"/QUALITY_REJECTS.fastq"                                                                             
+    outpath = rejects_dir*"/QUALITY_REJECTS.fastq"                                                                             
     records = FASTQ.Record.(
                     names[rejects],
                     seqs[rejects],
@@ -631,10 +632,11 @@ function chunked_fastq_filter_demux(chunk, chunk_size, seqs, phreds, names;
             if haskey(demux_dic,(i,j))
                 if haskey(primer_lookup,(fwd_primer,rev_primer))
                     ID = primer_lookup[fwd_primer,rev_primer]
+                    outpath = demux_dir*"/$(ID)_$(fwd_primer)_$(rev_primer).fastq"                                                                                            
                 else
                     ID = "UNKNOWN"
+                    outpath = rejects_dir*"/$(ID)_$(fwd_primer)_$(rev_primer).fastq"                                                                                            
                 end
-                outpath = demux_dir*"/$(ID)_$(fwd_primer)_$(rev_primer).fastq"
                 result = demux_dic[i,j]
                 records = FASTQ.Record.(
                     filtered_names[getindex.(result, 3)],
