@@ -139,22 +139,21 @@ end
 """
 function chunked_fastq_apply(fpath, func::Function; chunk_size=10000, f_kwargs = [], verbose = false)
 
-Pass a function of the form `func(seqs::Array{Any,1}, phreds::Array{Phred,1}, names::Array{Any,1})` to apply to a large FASTQ file chunk by chunk.
+Pass a function of the form `func(chunk, chunk_size, seqs::Array{Any,1}, phreds::Array{Phred,1}, names::Array{Any,1})` 
+to apply to a large FASTQ file chunk by chunk.
 The input file can be Gzipped or uncompressed. Additional kwargs can be passed to the function via f_kwargs.
 """
 function chunked_fastq_apply(fpath, func::Function; chunk_size=10000, f_kwargs = [], verbose = false)
-	if endswith(fpath, ".gz")
+    if endswith(fpath, ".gz")
     	reader = FASTQ.Reader(GzipDecompressorStream(open(fpath)))
-	else
+    else
 		reader = FASTQ.Reader(open(fpath))
-	end
-	if !hasmethod(func, Tuple{Array{Any,1}, Array{Phred,1}, Array{Any,1}})
-		@error "Function argument must accept func(seqs::Array{Any,1}, phreds::Array{Phred,1}, names::Array{Any,1})!"
-	end
+    end
     seqs, phreds, names = [], Vector{Phred}[], []
+    chunk = 0				
     i = 0
     record = FASTQ.Record()
-	results = []
+    read_counts = [0, 0, 0]
     while !eof(reader)
         read!(reader, record)
         push!(seqs, FASTQ.sequence(String, record))
@@ -163,7 +162,8 @@ function chunked_fastq_apply(fpath, func::Function; chunk_size=10000, f_kwargs =
         i += 1
         if i == chunk_size
             #apply func...
-            res = func(seqs, phreds, names; f_kwargs...)
+	    chunk += 1						
+            read_counts += func(chunk, chunk_size, seqs, phreds, names; f_kwargs...)
 			push!(results, res)
             seqs, phreds, names = [], Vector{Phred}[], []
             i = 0
@@ -173,9 +173,10 @@ function chunked_fastq_apply(fpath, func::Function; chunk_size=10000, f_kwargs =
     close(reader)
     if i > 0
         #apply func...
-        res = func(seqs, phreds, names; f_kwargs...)
+	chunk += 1					
+        read_counts += func(chunk, chunk_size, seqs, phreds, names; f_kwargs...)
 		push!(results, res)
     end
     if verbose print(".") end
-	return results
+    return read_counts
 end
