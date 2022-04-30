@@ -572,6 +572,7 @@ end
 
 #------Chunked demux funcions--------
 # Currently not exported.
+export chunked_fastq_filter_demux                                                                                
 """
 function chunked_fastq_filter_demux(chunk, chunk_size, seqs, phreds, names;
     demux_dir = "demux", fwd_primers = String[], rev_primers = String[],
@@ -581,7 +582,6 @@ function chunked_fastq_filter_demux(chunk, chunk_size, seqs, phreds, names;
 Intended to be passed to `chunked_fastq_apply()` for quality/length filtering and demultiplexing of
 FASTQ files in one pass.
 """
-export chunked_fastq_filter_demux                                                                                
 function chunked_fastq_filter_demux(chunk, chunk_size, seqs, phreds, names;
     demux_dir = "demux", rejects_dir = "rejects", fwd_primers = String[], rev_primers = String[],
     verbose = false, tol_one_error = true, primer_lookup = Dict(), error_rate = 0.01,
