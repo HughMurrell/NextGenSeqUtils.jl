@@ -836,7 +836,10 @@ function kmer_seeded_align(s1::String, s2::String;
 
     if debug
         if (degap(alignedStrings[1]) != degap(s1) || degap(alignedStrings[2]) != degap(s2))
-            error("Aligned strings do not match original strings")
+            println("Aligned strings do not match original strings")
+            println("returning full DP alignment")
+            return triplet_nw_align(s1, s2, boundary_mult=boundary_mult)
+            # error("Aligned strings do not match original strings")
         end
     end
     return alignedStrings
@@ -899,7 +902,10 @@ function triplet_kmer_seeded_align(s1::String, s2::String;
 
     debug = true
     if debug && (degap(alignedStrings[1]) != degap(s1) || degap(alignedStrings[2]) != degap(s2))
-        error("Aligned strings do not match original strings")
+        println("Aligned strings do not match original strings")
+        println("returning full DP alignment")
+        return triplet_nw_align(s1, s2, boundary_mult=boundary_mult)
+        # error("Aligned strings do not match original strings")
     end
     return alignedStrings
 end
@@ -983,7 +989,10 @@ function local_kmer_seeded_align(s1::String, s2::String;
 
     if debug
         if (degap(alignedStrings[1]) != degap(s1) || degap(alignedStrings[2]) != degap(s2))
-            error("Aligned strings do not match original strings")
+            println("Aligned strings do not match original strings")
+            println("returning full DP alignment")
+            return triplet_nw_align(s1, s2, boundary_mult=boundary_mult)
+            # error("Aligned strings do not match original strings")
         end
     end
     return alignedStrings
