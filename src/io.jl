@@ -103,8 +103,9 @@ function read_fastq(filename; seqtype=String, min_length=nothing, max_length=not
 		if max_length != nothing && length(FASTQ.sequence(seqtype, record)) > max_length
 			continue
         end
-	push!(seqs, FASTQ.sequence(seqtype, record))
-        push!(phreds, FASTQ.quality(record, :sanger))
+        push!(seqs, FASTQ.sequence(seqtype, record))
+        push!(phreds, collect(FASTQ.quality_scores(record, :sanger)))
+                    # was FASTQ.quality(record, :sanger))
         push!(names, FASTQ.identifier(record))
     end
     return seqs, phreds, names
