@@ -74,7 +74,7 @@ function read_fastq_records(filename)
     stream = open(FASTQ.Reader, filename)
     records = FASTQ.Record[]
     for record in stream
-        if any([q < 0 for q in record.quality])
+        if any([q < 0 for q in collect(FASTQ.quality_scores(record, :sanger))  ])
             error("$(record.name) in $filename contains negative phred values")
         end
         push!(records, record)
@@ -94,7 +94,7 @@ function read_fastq(filename; seqtype=String, min_length=nothing, max_length=not
     phreds = Vector{Phred}[]
     names = String[]
     for record in records
-		if err_rate != nothing && mean(phred_to_p(Array{Int8,1}(FASTQ.quality(record, :sanger)))) > err_rate
+		if err_rate != nothing && mean(phred_to_p(Array{Int8,1}(collect(FASTQ.quality_scores(record, :sanger))))) > err_rate
 			continue
 		end
 		if min_length != nothing && length(FASTQ.sequence(seqtype, record)) < min_length
